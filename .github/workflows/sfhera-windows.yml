@@ -1,0 +1,25 @@
+name: Sfhera Suporte - Windows
+
+# Gera o instalador do Sfhera Suporte para Windows e publica na release "sfhera".
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "res/**"
+      - "flutter/**"
+      - "Cargo.toml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    uses: ./.github/workflows/flutter-build.yml
+    secrets: inherit
+    with:
+      upload-artifact: true
+      upload-tag: "sfhera"
+      publish-update-metadata: false
+      windows-only: true

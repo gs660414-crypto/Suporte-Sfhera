@@ -2507,6 +2507,8 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 }
 
 pub fn load_custom_client() {
+    // Marca Sfhera Suporte: nome fixo do aplicativo (pode ser sobrescrito por custom.txt).
+    *config::APP_NAME.write().unwrap() = "Sfhera Suporte".to_owned();
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
