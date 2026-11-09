@@ -1,0 +1,29 @@
+name: Sfhera Suporte - Publicar link fixo
+
+# Copia o instalador do Windows da release "sfhera" com o nome SfheraSuporte.exe,
+# para o link fixo sempre baixar a versão mais nova.
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Sfhera Suporte - Windows"]
+    types: [completed]
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/sfhera-publicar.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copiar instalador como SfheraSuporte.exe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release download sfhera -R "${{ github.repository }}" -p 'rustdesk-*-x86_64.exe' -O SfheraSuporte.exe
+          gh release upload sfhera SfheraSuporte.exe -R "${{ github.repository }}" --clobber
