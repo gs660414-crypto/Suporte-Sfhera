@@ -1,0 +1,74 @@
+name: Sfhera Suporte - Instalar servidor
+
+# Instala o servidor do RustDesk (hbbs/hbbr) na VPS NAT da HavicHost.
+# Portas: hbbs 31201(nat) 31202(id tcp/udp) 31204(ws); hbbr 31205(relay) 31207(ws).
+# e mostra a chave pública no log.
+# Precisa do segredo VPS_SENHA (senha de root da VPS).
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/sfhera-servidor.yml"
+
+env:
+  VPS_IP: "131.196.198.216"
+  VPS_SSH_PORTA: "31200"
+
+jobs:
+  instalar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar servidor na VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_SENHA }}
+        run: |
+          set -e
+          if [ -z "$SSHPASS" ]; then echo "Falta o segredo VPS_SENHA"; exit 1; fi
+          sudo apt-get install -y sshpass >/dev/null
+          cat > instalar.sh <<'EOS'
+          set -e
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y >/dev/null
+          apt-get install -y curl unzip >/dev/null
+          case "$(uname -m)" in
+            x86_64) ARQ=amd64 ;;
+            aarch64) ARQ=arm64v8 ;;
+            *) echo "Arquitetura nao suportada: $(uname -m)"; exit 1 ;;
+          esac
+          TAG=$(curl -fsSL https://api.github.com/repos/rustdesk/rustdesk-server/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
+          cd /tmp && rm -rf rds && mkdir rds && cd rds
+          curl -fsSL -o s.zip "https://github.com/rustdesk/rustdesk-server/releases/download/${TAG}/rustdesk-server-linux-${ARQ}.zip"
+          unzip -q s.zip
+          mkdir -p /opt/rustdesk
+          systemctl stop rustdesk-hbbs rustdesk-hbbr 2>/dev/null || true
+          install -m 755 */hbbs */hbbr /opt/rustdesk/
+          for s in hbbs hbbr; do
+            cat > /etc/systemd/system/rustdesk-$s.service <<EOF
+          [Unit]
+          Description=RustDesk $s (Sfhera Suporte)
+          After=network.target
+          [Service]
+          WorkingDirectory=/opt/rustdesk
+          ExecStart=/opt/rustdesk/$s $([ $s = hbbs ] && echo "-p 31202 -r 131.196.198.216:31205" || echo "-p 31205")
+          Restart=always
+          RestartSec=5
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          done
+          systemctl daemon-reload
+          systemctl enable --now rustdesk-hbbs rustdesk-hbbr
+          if command -v ufw >/dev/null && ufw status | grep -q active; then
+            ufw allow 31200/tcp; ufw allow 31201:31219/tcp; ufw allow 31201:31219/udp
+          fi
+          sleep 5
+          systemctl is-active rustdesk-hbbs rustdesk-hbbr
+          echo "CHAVE_PUBLICA=$(cat /opt/rustdesk/id_ed25519.pub)"
+          EOS
+          sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" 'bash -s' < instalar.sh
+      - name: Testar portas de fora
+        run: |
+          for p in 31201 31202 31205; do
+            timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$p" && echo "porta $p ok" || echo "porta $p FECHADA"
+          done
