@@ -13,7 +13,7 @@ on:
       - ".github/workflows/sfhera-servidor.yml"
 
 env:
-  VPS_IP: "IP_DA_KINGHOST"
+  VPS_IP: "191.252.208.223"
   VPS_SSH_PORTA: "22"
 
 jobs:
@@ -62,9 +62,12 @@ jobs:
           systemctl daemon-reload
           systemctl enable --now rustdesk-hbbs rustdesk-hbbr
           # Protecao: firewall so com as portas necessarias + fail2ban contra tentativa de senha
-          apt-get install -y ufw fail2ban >/dev/null
-          ufw allow "${SSH_PORTA}/tcp"; ufw allow 21115:21119/tcp; ufw allow 21116/udp
-          ufw --force enable
+          # Nao liga firewall novo (pode haver outros servicos nesta VPS); so libera nossas portas se ja estiver ativo
+          apt-get install -y fail2ban >/dev/null
+          if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
+            ufw allow 21115:21119/tcp; ufw allow 21116/udp
+          fi
+          echo "== servicos escutando antes/depois:"; ss -tlnp | awk 'NR>1{print $4, $6}' | sort -u | head -30
           printf '[sshd]\nenabled = true\nport = %s\nmaxretry = 5\nbantime = 1h\n' "$SSH_PORTA" > /etc/fail2ban/jail.d/sshd.local
           systemctl enable --now fail2ban; systemctl restart fail2ban
           sleep 5
