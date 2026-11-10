@@ -1,7 +1,7 @@
 name: Sfhera Suporte - Instalar servidor
 
-# Instala o servidor do RustDesk (hbbs/hbbr) na VPS NAT da HavicHost.
-# Portas: hbbs 31201(nat) 31202(id tcp/udp) 31204(ws); hbbr 31205(relay) 31207(ws).
+# Instala o servidor do RustDesk (hbbs/hbbr) na VPS (KingHost), portas padrão 21115-21119,
+# com firewall (ufw) e fail2ban.
 # e mostra a chave pública no log.
 # Precisa do segredo VPS_SENHA (senha de root da VPS).
 # Rodar de novo: altere esta linha. (3)
@@ -13,8 +13,8 @@ on:
       - ".github/workflows/sfhera-servidor.yml"
 
 env:
-  VPS_IP: "131.196.198.216"
-  VPS_SSH_PORTA: "31200"
+  VPS_IP: "IP_DA_KINGHOST"
+  VPS_SSH_PORTA: "22"
 
 jobs:
   instalar:
@@ -26,6 +26,7 @@ jobs:
         run: |
           set -e
           if [ -z "$SSHPASS" ]; then echo "Falta o segredo VPS_SENHA"; exit 1; fi
+          if [ "$VPS_IP" = "IP_DA_KINGHOST" ]; then echo "IP do servidor novo ainda nao definido"; exit 0; fi
           sudo apt-get install -y sshpass >/dev/null
           cat > instalar.sh <<'EOS'
           set -e
@@ -51,7 +52,7 @@ jobs:
           After=network.target
           [Service]
           WorkingDirectory=/opt/rustdesk
-          ExecStart=/opt/rustdesk/$s $([ $s = hbbs ] && echo "-p 31202 -r 131.196.198.216:31205" || echo "-p 31205")
+          ExecStart=/opt/rustdesk/$s $([ $s = hbbs ] && echo "-r __VPS_IP__:21117")
           Restart=always
           RestartSec=5
           [Install]
@@ -60,16 +61,20 @@ jobs:
           done
           systemctl daemon-reload
           systemctl enable --now rustdesk-hbbs rustdesk-hbbr
-          if command -v ufw >/dev/null && ufw status | grep -q active; then
-            ufw allow 31200/tcp; ufw allow 31201:31219/tcp; ufw allow 31201:31219/udp
-          fi
+          # Protecao: firewall so com as portas necessarias + fail2ban contra tentativa de senha
+          apt-get install -y ufw fail2ban >/dev/null
+          ufw allow "${SSH_PORTA}/tcp"; ufw allow 21115:21119/tcp; ufw allow 21116/udp
+          ufw --force enable
+          printf '[sshd]\nenabled = true\nport = %s\nmaxretry = 5\nbantime = 1h\n' "$SSH_PORTA" > /etc/fail2ban/jail.d/sshd.local
+          systemctl enable --now fail2ban; systemctl restart fail2ban
           sleep 5
           systemctl is-active rustdesk-hbbs rustdesk-hbbr
           echo "CHAVE_PUBLICA=$(cat /opt/rustdesk/id_ed25519.pub)"
           EOS
-          sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" 'bash -s' < instalar.sh
+          sed -i "s/__VPS_IP__/$VPS_IP/g" instalar.sh
+          sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" "SSH_PORTA=$VPS_SSH_PORTA bash -s" < instalar.sh
       - name: Testar portas de fora
         run: |
-          for p in 31201 31202 31205; do
+          for p in 21115 21116 21117; do
             timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$p" && echo "porta $p ok" || echo "porta $p FECHADA"
           done
