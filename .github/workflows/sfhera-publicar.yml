@@ -1,11 +1,11 @@
 name: Sfhera Suporte - Publicar link fixo
 
 # Copia o instalador do Windows da release "sfhera" com o nome SfheraSuporte.exe,
-# para o link fixo sempre baixar a versão mais nova.
+# e o APK do Android como SfheraSuporte.apk, para os links fixos sempre baixarem a versão mais nova.
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Sfhera Suporte - Windows"]
+    workflows: ["Sfhera Suporte - Windows", "Sfhera Suporte - Android"]
     types: [completed]
   push:
     branches: [master]
@@ -25,5 +25,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          gh release download sfhera -R "${{ github.repository }}" -p 'rustdesk-*-x86_64.exe' -O SfheraSuporte.exe
-          gh release upload sfhera SfheraSuporte.exe -R "${{ github.repository }}" --clobber
+          if gh release download sfhera -R "${{ github.repository }}" -p 'rustdesk-*-x86_64.exe' -O SfheraSuporte.exe; then
+            gh release upload sfhera SfheraSuporte.exe -R "${{ github.repository }}" --clobber
+          fi
+          if gh release download sfhera -R "${{ github.repository }}" -p 'rustdesk-*-universal.apk' -O SfheraSuporte.apk; then
+            gh release upload sfhera SfheraSuporte.apk -R "${{ github.repository }}" --clobber
+          fi

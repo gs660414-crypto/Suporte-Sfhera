@@ -9,6 +9,7 @@ on:
       - "src/**"
       - "res/**"
       - "flutter/**"
+      - "!flutter/android/**"
       - "Cargo.toml"
 
 permissions:

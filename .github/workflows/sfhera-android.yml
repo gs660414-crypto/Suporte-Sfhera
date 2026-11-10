@@ -1,0 +1,25 @@
+name: Sfhera Suporte - Android
+
+# Gera o APK do Sfhera Suporte para Android e publica na release "sfhera".
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - "src/**"
+      - "flutter/**"
+      - "Cargo.toml"
+      - ".github/workflows/sfhera-android.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    uses: ./.github/workflows/flutter-build.yml
+    secrets: inherit
+    with:
+      upload-artifact: true
+      upload-tag: "sfhera"
+      publish-update-metadata: false
+      android-only: true
