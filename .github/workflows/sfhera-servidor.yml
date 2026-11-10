@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Instalar servidor na VPS
         env:
-          SSHPASS: ${{ secrets.VPS_SENHA || secrets.VPN_SENHA }}
+          SSHPASS: ${{ secrets.VPN_SENHA || secrets.VPS_SENHA }}
         run: |
           set -e
           if [ -z "$SSHPASS" ]; then echo "Falta o segredo VPS_SENHA"; exit 1; fi

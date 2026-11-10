@@ -21,7 +21,7 @@ jobs:
       - name: Dentro da VPS
         continue-on-error: true
         env:
-          SSHPASS: ${{ secrets.VPS_SENHA || secrets.VPN_SENHA }}
+          SSHPASS: ${{ secrets.VPN_SENHA || secrets.VPS_SENHA }}
         run: |
           sudo apt-get install -y sshpass >/dev/null
           sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" 'bash -s' <<'EOS'
@@ -29,6 +29,9 @@ jobs:
           echo "== memoria"; free -m
           echo "== disco"; df -h / | tail -1
           echo "== cpu"; nproc
+          echo "== processos que mais usam CPU"; ps -eo pid,user,pcpu,pmem,etime,comm --sort=-pcpu | head -12
+          echo "== usuarios logados / ultimos logins"; who; last -n 8 2>/dev/null | head -8
+          echo "== chaves hbbs"; ls -la /opt/rustdesk/; cat /opt/rustdesk/id_ed25519.pub; echo
           for s in rustdesk-hbbs rustdesk-hbbr; do
             echo "== $s: $(systemctl is-active $s) | reinicios: $(systemctl show -p NRestarts --value $s) | desde: $(systemctl show -p ActiveEnterTimestamp --value $s)"
           done
