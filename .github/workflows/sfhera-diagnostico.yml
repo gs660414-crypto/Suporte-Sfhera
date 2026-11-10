@@ -8,6 +8,7 @@ on:
     branches: [master]
     paths:
       - ".github/workflows/sfhera-diagnostico.yml"
+# rodada: 2
 
 env:
   VPS_IP: "131.196.198.216"
@@ -18,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dentro da VPS
+        continue-on-error: true
         env:
           SSHPASS: ${{ secrets.VPS_SENHA || secrets.VPN_SENHA }}
         run: |
@@ -41,7 +43,7 @@ jobs:
         run: |
           for p in 31202 31205; do
             ok=0; falha=0; lento=0
-            for i in $(seq 1 30); do
+            for i in $(seq 1 20); do
               ini=$(date +%s%N)
               if timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$p" 2>/dev/null; then
                 ms=$(( ($(date +%s%N)-ini)/1000000 )); ok=$((ok+1)); [ $ms -gt 500 ] && lento=$((lento+1))
