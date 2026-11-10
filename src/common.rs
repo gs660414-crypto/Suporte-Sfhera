@@ -2528,6 +2528,13 @@ pub fn load_custom_client() {
         h.insert("disable-account".to_owned(), "Y".to_owned());
         h.insert("disable-ab".to_owned(), "Y".to_owned());
     }
+    // Login antigo (do tempo do servidor público) faz o app exigir uma verificação que o
+    // nosso servidor não tem ("Failed to secure tcp: deadline has elapsed"). Sem contas, apaga.
+    for k in ["access_token", "user_info"] {
+        if !config::LocalConfig::get_option(k).is_empty() {
+            config::LocalConfig::set_option(k.to_owned(), "".to_owned());
+        }
+    }
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
