@@ -2509,14 +2509,14 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 pub fn load_custom_client() {
     // Marca Sfhera Suporte: nome fixo do aplicativo (pode ser sobrescrito por custom.txt).
     *config::APP_NAME.write().unwrap() = "Sfhera Suporte".to_owned();
-    // Servidor próprio da Sfhera (VPS com portas 31201-31219).
+    // Servidor próprio da Sfhera (VPS KingHost, portas padrão 21115-21119).
     {
         let mut s = config::OVERWRITE_SETTINGS.write().unwrap();
-        s.insert("custom-rendezvous-server".to_owned(), "131.196.198.216:31202".to_owned());
-        s.insert("relay-server".to_owned(), "131.196.198.216:31205".to_owned());
-        s.insert("key".to_owned(), "AJITQU7+AhhJQJLi5NmlImdf9eDa2e01EaBWasW08BM=".to_owned());
+        s.insert("custom-rendezvous-server".to_owned(), "191.252.208.223".to_owned());
+        s.insert("relay-server".to_owned(), "191.252.208.223".to_owned());
+        s.insert("key".to_owned(), "Z7NEMaWMjHFnb+JLn4mLq5dbx2wvI6W2OaKcYbzxKwY=".to_owned());
     }
-    // Nosso servidor não tem API de conta (a porta 31200, que o app deduziria, é o SSH da VPS).
+    // Nosso servidor não tem API de conta (versão gratuita do servidor RustDesk).
     // Aponta a API para um endereço local fechado (falha na hora, sem travar a tela)
     // e esconde login e catálogo de endereços online.
     config::OVERWRITE_SETTINGS

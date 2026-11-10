@@ -11,8 +11,8 @@ on:
 # rodada: 2
 
 env:
-  VPS_IP: "131.196.198.216"
-  VPS_SSH_PORTA: "31200"
+  VPS_IP: "191.252.208.223"
+  VPS_SSH_PORTA: "22"
 
 jobs:
   diagnostico:
@@ -39,13 +39,13 @@ jobs:
           echo "== erros/avisos nas ultimas 24h (hbbs)"; journalctl -u rustdesk-hbbs --since "24 hours ago" --no-pager | grep -iE "error|warn|fail|panic|timeout" | tail -40
           echo "== erros/avisos nas ultimas 24h (hbbr)"; journalctl -u rustdesk-hbbr --since "24 hours ago" --no-pager | grep -iE "error|warn|fail|panic|timeout" | tail -40
           echo "== ultimas linhas hbbr"; journalctl -u rustdesk-hbbr --since "24 hours ago" --no-pager | tail -25
-          echo "== conexoes abertas por porta"; ss -tan | awk 'NR>1{split($4,a,":"); print a[length(a)]}' | grep -E "^312" | sort | uniq -c
+          echo "== conexoes abertas por porta"; ss -tan | awk 'NR>1{split($4,a,":"); print a[length(a)]}' | grep -E "^211" | sort | uniq -c
           echo "== erros de rede na interface"; ip -s link | grep -A6 -E "^[0-9]+: (eth|ens|enp|venet)" | head -30
           echo "== kernel (oom/rede)"; dmesg 2>/dev/null | grep -iE "oom|killed process|link is down|dropped" | tail -10
           EOS
       - name: Teste das portas de fora (60 tentativas)
         run: |
-          for p in 31202 31205 31210 31218; do
+          for p in 21115 21116 21117 21119; do
             ok=0; falha=0; lento=0
             for i in $(seq 1 5); do
               ini=$(date +%s%N)
