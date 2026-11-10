@@ -2516,12 +2516,13 @@ pub fn load_custom_client() {
         s.insert("relay-server".to_owned(), "131.196.198.216:31205".to_owned());
         s.insert("key".to_owned(), "AJITQU7+AhhJQJLi5NmlImdf9eDa2e01EaBWasW08BM=".to_owned());
     }
-    // Nosso servidor não tem API de conta (porta 31200 é o SSH da VPS):
-    // desliga login, catálogo de endereços online e chamadas de API.
-    config::BUILTIN_SETTINGS
+    // Nosso servidor não tem API de conta (a porta 31200, que o app deduziria, é o SSH da VPS).
+    // Aponta a API para um endereço local fechado (falha na hora, sem travar a tela)
+    // e esconde login e catálogo de endereços online.
+    config::OVERWRITE_SETTINGS
         .write()
         .unwrap()
-        .insert("register-device".to_owned(), "N".to_owned());
+        .insert("api-server".to_owned(), "http://127.0.0.1:9".to_owned());
     {
         let mut h = config::HARD_SETTINGS.write().unwrap();
         h.insert("disable-account".to_owned(), "Y".to_owned());
