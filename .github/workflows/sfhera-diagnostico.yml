@@ -41,9 +41,9 @@ jobs:
           EOS
       - name: Teste das portas de fora (60 tentativas)
         run: |
-          for p in 31202 31205; do
+          for p in 31202 31205 31210 31218; do
             ok=0; falha=0; lento=0
-            for i in $(seq 1 20); do
+            for i in $(seq 1 5); do
               ini=$(date +%s%N)
               if timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$p" 2>/dev/null; then
                 ms=$(( ($(date +%s%N)-ini)/1000000 )); ok=$((ok+1)); [ $ms -gt 500 ] && lento=$((lento+1))
