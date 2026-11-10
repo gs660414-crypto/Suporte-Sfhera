@@ -10,6 +10,7 @@ on:
       - "flutter/**"
       - "Cargo.toml"
       - ".github/workflows/sfhera-android.yml"
+      - ".github/workflows/flutter-build.yml"
 
 permissions:
   contents: write
