@@ -1,7 +1,7 @@
 name: Sfhera Suporte - Instalar servidor
 
 # Instala o servidor do RustDesk (hbbs/hbbr) na VPS (KingHost), portas padrão 21115-21119,
-# com firewall (ufw) e fail2ban.
+# com firewall (ufw) e fail2ban, e sem limites de velocidade/tempo no relay.
 # e mostra a chave pública no log.
 # Precisa do segredo VPS_SENHA (senha de root da VPS).
 # Rodar de novo: altere esta linha. (3)
@@ -52,6 +52,7 @@ jobs:
           After=network.target
           [Service]
           WorkingDirectory=/opt/rustdesk
+          Environment=TOTAL_BANDWIDTH=10240 SINGLE_BANDWIDTH=1024 LIMIT_SPEED=1024 DOWNGRADE_THRESHOLD=1000 DOWNGRADE_START_CHECK=86400
           ExecStart=/opt/rustdesk/$s $([ $s = hbbs ] && echo "-r __VPS_IP__:21117")
           Restart=always
           RestartSec=5
