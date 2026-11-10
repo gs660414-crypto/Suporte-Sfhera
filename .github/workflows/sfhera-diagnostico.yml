@@ -1,0 +1,52 @@
+name: Sfhera Suporte - Diagnostico do servidor
+
+# Mostra saúde do servidor RustDesk na VPS (serviços, reinícios, erros, memória, rede)
+# e testa as portas de fora várias vezes. Só lê, não muda nada.
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/sfhera-diagnostico.yml"
+
+env:
+  VPS_IP: "131.196.198.216"
+  VPS_SSH_PORTA: "31200"
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dentro da VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_SENHA || secrets.VPN_SENHA }}
+        run: |
+          sudo apt-get install -y sshpass >/dev/null
+          sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" 'bash -s' <<'EOS'
+          echo "== uptime / carga"; uptime
+          echo "== memoria"; free -m
+          echo "== disco"; df -h / | tail -1
+          echo "== cpu"; nproc
+          for s in rustdesk-hbbs rustdesk-hbbr; do
+            echo "== $s: $(systemctl is-active $s) | reinicios: $(systemctl show -p NRestarts --value $s) | desde: $(systemctl show -p ActiveEnterTimestamp --value $s)"
+          done
+          echo "== erros/avisos nas ultimas 24h (hbbs)"; journalctl -u rustdesk-hbbs --since "24 hours ago" --no-pager | grep -iE "error|warn|fail|panic|timeout" | tail -40
+          echo "== erros/avisos nas ultimas 24h (hbbr)"; journalctl -u rustdesk-hbbr --since "24 hours ago" --no-pager | grep -iE "error|warn|fail|panic|timeout" | tail -40
+          echo "== ultimas linhas hbbr"; journalctl -u rustdesk-hbbr --since "24 hours ago" --no-pager | tail -25
+          echo "== conexoes abertas por porta"; ss -tan | awk 'NR>1{split($4,a,":"); print a[length(a)]}' | grep -E "^312" | sort | uniq -c
+          echo "== erros de rede na interface"; ip -s link | grep -A6 -E "^[0-9]+: (eth|ens|enp|venet)" | head -30
+          echo "== kernel (oom/rede)"; dmesg 2>/dev/null | grep -iE "oom|killed process|link is down|dropped" | tail -10
+          EOS
+      - name: Teste das portas de fora (60 tentativas)
+        run: |
+          for p in 31202 31205; do
+            ok=0; falha=0; lento=0
+            for i in $(seq 1 30); do
+              ini=$(date +%s%N)
+              if timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$p" 2>/dev/null; then
+                ms=$(( ($(date +%s%N)-ini)/1000000 )); ok=$((ok+1)); [ $ms -gt 500 ] && lento=$((lento+1))
+              else falha=$((falha+1)); fi
+              sleep 1
+            done
+            echo "porta $p: ok=$ok falhas=$falha lentas(>500ms)=$lento"
+          done
