@@ -52,3 +52,4 @@ jobs:
             done
             echo "porta $p: ok=$ok falhas=$falha lentas(>500ms)=$lento"
           done
+# rodada 1794316808
