@@ -4,6 +4,7 @@ name: Sfhera Suporte - Instalar servidor
 # Portas: hbbs 31201(nat) 31202(id tcp/udp) 31204(ws); hbbr 31205(relay) 31207(ws).
 # e mostra a chave pública no log.
 # Precisa do segredo VPS_SENHA (senha de root da VPS).
+# Rodar de novo: altere esta linha. (1)
 on:
   workflow_dispatch:
   push:
