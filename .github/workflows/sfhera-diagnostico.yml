@@ -24,6 +24,7 @@ jobs:
           SSHPASS: ${{ secrets.VPN_SENHA || secrets.VPS_SENHA }}
         run: |
           sudo apt-get install -y sshpass >/dev/null
+          for i in $(seq 1 30); do timeout 5 bash -c "echo > /dev/tcp/$VPS_IP/$VPS_SSH_PORTA" 2>/dev/null && break; echo "esperando a VPS ligar..."; sleep 10; done
           sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p "$VPS_SSH_PORTA" root@"$VPS_IP" 'bash -s' <<'EOS'
           echo "== uptime / carga"; uptime
           echo "== memoria"; free -m
