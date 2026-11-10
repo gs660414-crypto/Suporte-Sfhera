@@ -289,7 +289,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final textColor = Theme.of(context).textTheme.titleLarge?.color;
     final showOneTime = model.approveMode != 'click' &&
         model.verificationMethod != kUsePermanentPassword;
-    return Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+    Container(
       margin: EdgeInsets.only(left: 20.0, right: 16, top: 13, bottom: 13),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -378,6 +381,17 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           ),
         ],
       ),
+    ),
+    // Sfhera Suporte: botão visível para o técnico definir a senha de acesso deste PC.
+    Padding(
+      padding: const EdgeInsets.only(left: 14.0, bottom: 6),
+      child: TextButton.icon(
+        icon: const Icon(Icons.lock_outline, size: 18),
+        label: const Text('Definir senha de acesso'),
+        onPressed: () => setPasswordDialog(),
+      ),
+    ),
+      ],
     );
   }
 

@@ -2516,14 +2516,6 @@ pub fn load_custom_client() {
         s.insert("relay-server".to_owned(), "131.196.198.216:31205".to_owned());
         s.insert("key".to_owned(), "AJITQU7+AhhJQJLi5NmlImdf9eDa2e01EaBWasW08BM=".to_owned());
     }
-    // Senha padrão (vem de um segredo do GitHub na hora do build, nunca do código).
-    // O cliente continua podendo aceitar a conexão por clique.
-    if let Some(senha) = option_env!("SFHERA_SENHA_PADRAO") {
-        let senha = senha.trim();
-        if !senha.is_empty() && !config::Config::has_local_permanent_password() {
-            config::Config::set_permanent_password(senha);
-        }
-    }
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
